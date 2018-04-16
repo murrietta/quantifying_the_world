@@ -650,9 +650,75 @@ scoreStr = ["{:>20}: {:>.4}".format("Test Loss",score[0])] + \
 print("\n".join(scoreStr))
 
 
+def model_test(layers, opt_args, mtrcs=['accuracy', 'mae']):
+	#layers is a list of lists where each inner list defines a dens layer
+	#	for layer in layers: layer[0] is # of nodes in layer, layer[1] is
+	#	kernel initializer, layer[2] is activation function
+	model = Sequential()
+	layer = layers[0]
+	model.add(Dense(layer[0], input_dim=x.shape[1], kernel_initializer=layer[1], activation=layer[2]))
+	for layer in layers[1:]:
+		model.add(Dense(layer[0], kernel_initializer=layer[1], activation=layer[2]))
 
+	opt = SGD(lr=opt_args[0], decay=opt_args[1], momentum=0.9, nesterov=True)
+	model.compile(loss='binary_crossentropy', metrics=mtrcs, optimizer=opt)
 
+	batch_size=100
+	score = model.evaluate(x_test, y_test, batch_size=batch_size)
 
+	#compute and print results
+	return score + [roc_auc_score(y_test,model.predict(x_test))]
+	# scoreStr = ["{:>20}: {:>.4}".format("Test Loss",score[0])] + \
+	# 	["{:>20}: {:>.4}".format("Test {}".format(x), y) for x, y in zip(mtrcs, score[1:])] + \
+	# 	["{:>20}: {:>.4}".format("Test ROCAUC", sdat[-1][-1])]
+	# print("\n".join(scoreStr))
+
+#try it out
+layer_list = [[[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[1, "uniform", "sigmoid"]],
+				[[50, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[1, "uniform", "sigmoid"]],
+				[[50, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[1, "uniform", "sigmoid"]],
+				[[50, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[100, "uniform", "relu"],
+				[75, "uniform", "relu"],
+				[50, "uniform", "relu"],
+				[1, "uniform", "sigmoid"]]]
+import itertools
+lrates = [0.001*(3**x) for x in range(9)]
+drates = [10*x*(1e-6) for x in range(20)]
+opt_args = itertools.product(lrates, drates)
+params = [x for x in itertools.product(layer_list, opt_args)]
+
+sdat = []
+for param in params:
+	sdat.append(model_test(param[0], param[1]))
 
 #---------------------------------------------------------
 #here's all the results so far
