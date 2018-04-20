@@ -1,4 +1,4 @@
-# import keras
+import keras
 import tensorflow as tf
 import numpy as np
 import pandas as pd
@@ -659,11 +659,13 @@ def model_test(layers, opt_args, mtrcs=['accuracy', 'mae']):
 	model.add(Dense(layer[0], input_dim=x.shape[1], kernel_initializer=layer[1], activation=layer[2]))
 	for layer in layers[1:]:
 		model.add(Dense(layer[0], kernel_initializer=layer[1], activation=layer[2]))
+	model.add(Dense(1, kernel_initializer=layer[1], activation='sigmoid'))
 
 	opt = SGD(lr=opt_args[0], decay=opt_args[1], momentum=0.9, nesterov=True)
 	model.compile(loss='binary_crossentropy', metrics=mtrcs, optimizer=opt)
 
 	batch_size=100
+	model.fit(x, y, epochs=5, batch_size=batch_size, verbose=2)
 	score = model.evaluate(x_test, y_test, batch_size=batch_size)
 
 	#compute and print results
@@ -674,43 +676,9 @@ def model_test(layers, opt_args, mtrcs=['accuracy', 'mae']):
 	# print("\n".join(scoreStr))
 
 #try it out
-layer_list = [[[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[1, "uniform", "sigmoid"]],
-				[[50, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[1, "uniform", "sigmoid"]],
-				[[50, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[1, "uniform", "sigmoid"]],
-				[[50, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[100, "uniform", "relu"],
-				[75, "uniform", "relu"],
-				[50, "uniform", "relu"],
-				[1, "uniform", "sigmoid"]]]
+import random
 import itertools
+layer_list = [[[x*10, "uniform", random.choice(['relu','tanh','sigmoid'])] for x in np.random.randint(4, 10, 8)]]
 lrates = [0.001*(3**x) for x in range(9)]
 drates = [10*x*(1e-6) for x in range(20)]
 opt_args = itertools.product(lrates, drates)
